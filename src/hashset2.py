@@ -1,7 +1,7 @@
 """Hash table implementation of a set."""
 
 from typing import (
-    Generic, Iterable, TypeVar, Iterator
+    Generic, Iterable, TypeVar, Iterator, NamedTuple, Any
 )
 
 T = TypeVar('T')
@@ -40,27 +40,32 @@ class HashSet(Generic[T]):
         self.size = new_size
         self.used = 0
         self.array = [list() for _ in range(new_size)]
-        for b in old_array:
-            for x in b:
-                self.add(x)
+        for b in old_array: # running through all the hashed lists in the array
+            for x in b:     # running thourgh the values inside the lists
+                hash_val = b[x] # saving the already hashed values and assign it
+                index = hash_val%self.size # redo size 
+                self.array[index][x] = hash_val # assign the value to the index
+                self.used += 1 #update how many values we use 
 
     def add(self, element: T) -> None:
         """Add element to the set."""
-        b = self._get_bin(element)
-        if element not in b:
-            b.append(element)
-            self.used += 1
-            if self.used > self.size / 2:
-                self._resize(int(2 * self.size))
+        hash_val = hash(element) # hash the new element 
+        index = hash_val % self.size  # find the index 
+        bin = self.array[index] # find the right bin
+        if element not in bin:  # check whether it is in the array  
+            bin[element] = hash_val # put the value in the bin  
+            self.used += 1 #update amount of vals we use 
+            if self.used > self.size / 2: # make sure we have at least 1/2 the array free
+                self._resize(int(2 * self.size)) # resize
 
     def remove(self, element: T) -> None:
         """Remove element from the set."""
-        b = self._get_bin(element)
-        if element not in b:
+        b = self._get_bin(element)  # find the element 
+        if element not in b:  # check if its there at all
             raise KeyError(element)
-        b.remove(element)
-        self.used -= 1
-        if self.used < self.size / 4:
+        del b[element] # delete element if its there
+        self.used -= 1 # update used 
+        if self.used < self.size / 4: # resize if we use less than 25% of the entire size
             self._resize(int(self.size / 2))
 
     def __iter__(self) -> Iterator[T]:
